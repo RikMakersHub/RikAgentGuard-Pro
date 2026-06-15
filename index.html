@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ RikAgentGuard-Pro</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #0b0f19; color: #f3f4f6; margin: 0; padding: 20px; }
+        .header { text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 20px; margin-bottom: 20px; }
+        .container { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .panel { background: #111827; padding: 20px; border-radius: 8px; border: 1px solid #1e293b; }
+        .metric-card { background: #1f2937; padding: 15px; margin-bottom: 15px; border-radius: 6px; border-left: 4px solid #3b82f6; }
+        .metric-value { font-size: 24px; font-weight: bold; color: #3b82f6; margin-top: 5px; }
+        .btn { display: block; width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .btn-kill { background: #ef4444; }
+        .log-stream { background: #000; font-family: monospace; padding: 15px; height: 350px; overflow-y: auto; border-radius: 6px; border: 1px solid #374151; white-space: pre-wrap; }
+        .log-line { margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #1f2937; }
+        .status-banner { padding: 15px; margin-bottom: 20px; border-radius: 6px; text-align: center; font-weight: bold; font-size: 18px; }
+        .status-active { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }
+        .status-halted { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🛡️ RikAgentGuard-Pro</h1>
+        <p>Pure Client-Tier Autonomous Agent Safety Core & Execution Brake Matrix</p>
+    </div>
+
+    <div id="status-banner" class="status-banner status-active">SYSTEM SYSTEM MONITOR SECURE • LISTENING</div>
+
+    <div class="container">
+        <!-- LEFT PANEL: Blueprints & Controls -->
+        <div class="panel">
+            <h2>Safety Blueprints</h2>
+            <div class="metric-card">
+                <div>AI Runaway Loop Anomaly Index</div>
+                <div id="loop-score" class="metric-value">0%</div>
+            </div>
+            <div class="metric-card">
+                <div>Estimated Agent API Cost Overhead</div>
+                <div id="cost-display" class="metric-value">$0.0000</div>
+            </div>
+            <button class="btn" id="start-btn" onclick="startSimulation()">⚡ Launch Autonomous Agent Simulation</button>
+            <button class="btn btn-kill" id="kill-btn" onclick="triggerManualKill()">🛑 Emergency System Brake</button>
+        </div>
+
+        <!-- RIGHT PANEL: Telemetry Logs Matrix -->
+        <div class="panel">
+            <h2>Real-Time Intercepted Telemetry Stream</h2>
+            <div id="log-stream" class="log-stream">Ready to intercept agent environment execution outputs...</div>
+        </div>
+    </div>
+
+    <script>
+        let actionHistory = [];
+        let totalTokensUsed = 0;
+        let isHalted = false;
+        let simulationInterval = null;
+        const MAX_DUPLICATE_ACTIONS = 4;
+        const TIME_WINDOW_MS = 10000;
+
+        function appendLog(classification, text, color = "#f3f4f6") {
+            const stream = document.getElementById('log-stream');
+            if (stream.innerHTML.includes("Ready to intercept")) stream.innerHTML = "";
+            
+            const timestamp = new Date().toLocaleTimeString();
+            stream.innerHTML += `<div class="log-line" style="color: ${color}">[${timestamp}] [${classification}] ${text}</div>`;
+            stream.scrollTop = stream.scrollHeight;
+        }
+
+        function runLoopDetection(actionType, detail) {
+            const now = Date.now();
+            actionHistory.push({ actionType, detail, time: now });
+
+            // Prune actions outside our window
+            actionHistory = actionHistory.filter(event => now - event.time < TIME_WINDOW_MS);
+
+            // Count identical actions
+            const duplicates = actionHistory.filter(event => event.actionType === actionType && event.detail === detail).length;
+            const riskScore = Math.min((duplicates / MAX_DUPLICATE_ACTIONS) * 100, 100);
+            
+            document.getElementById('loop-score').innerText = `${riskScore}%`;
+
+            if (duplicates >= MAX_DUPLICATE_ACTIONS) {
+                triggerBrake(`Recursive action anomaly caught: Repeated [${actionType}] ${duplicates} times consecutively inside time window.`);
+                return false;
+            }
+            return true;
+        }
+
+        function startSimulation() {
+            if (isHalted || simulationInterval) return;
+            
+            appendLog("SYSTEM", "Spawning autonomous agent sandbox context...", "#3b82f6");
+            let attempt = 0;
+
+            simulationInterval = setInterval(() => {
+                attempt++;
+                totalTokensUsed += 540;
+                document.getElementById('cost-display').innerText = `$${(totalTokensUsed * 0.00002).toFixed(4)}`;
+
+                // Simulate the autonomous agent getting stuck looping a broken build command
+                const commandText = "npm run build --prod";
+                appendLog("AGENT_OUT", `Executing local terminal directive: ${commandText} (Cycle ${attempt})`);
+                
+                const passedGuard = runLoopDetection("TERMINAL_COMMAND", commandText);
+                if (!passedGuard) {
+                    clearInterval(simulationInterval);
+                    simulationInterval = null;
+                }
+            }, 1500);
+        }
+
+        function triggerBrake(reason) {
+            isHalted = true;
+            if (simulationInterval) clearInterval(simulationInterval);
+            
+            document.getElementById('status-banner').className = "status-banner status-halted";
+            document.getElementById('status-banner').innerText = "🛑 EMERGENCY BRAKE ENGAGED • AGENT PROCESS TREE TERMINATED";
+            document.getElementById('loop-score').style.color = "#ef4444";
+            
+            appendLog("GUARD_BRAKE", reason, "#ef4444");
+            appendLog("SYSTEM", "Process tree forcefully detached safely.", "#ef4444");
+        }
+
+        function triggerManualKill() {
+            triggerBrake("Manual operator intervention: Emergency kill switch activated by developer.");
+        }
+    </script>
+</body>
+</html>
